@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+        CTransifex build file for Phing
+        written by Daniel Dimitrov - https://compojoom.com
+        
+        Run "phing -f component.xml"
+        from the build directory to build the component, modules and plugins
+-->
+
+<project name="com_ctransifex" default="buildZip">
+	<property file="./build.properties"/>
+
+	<taskdef name="extfile" classname="phingext.listJPackageFilesTask"/>
+	<taskdef name="gitversion" classname="phingext.GitVersionTask"/>
+	<taskdef name="explode" classname="phingext.explodeTask"/>
+
+	<property name="dirs.root" value="${project.basedir}/../"/>
+	<property name="dirs.source" value="${dirs.root}source"/>
+
+	<tstamp>
+		<format property="build.date" pattern="%Y-%m-%d"/>
+	</tstamp>
+
+	<if>
+		<equals arg1="${build.version}" arg2="dev"/>
+		<then>
+			<gitversion workingCopy="${dirs.root}" propertyName="git.lastrevision"/>
+			<property name="build.version" value="git_${git.lastrevision}" override="true"/>
+		</then>
+	</if>
+
+	<target name="setup-properties">
+		<!-- Initialize the version if it's not set -->
+		<tstamp>
+			<format property="build.date" pattern="%Y-%m-%d"/>
+		</tstamp>
+
+		<property name="destination.dir"
+		          value="${dirs.root}/packages/components/com_${component.name}/com_${component.name}-${build.version}"/>
+		<mkdir dir="${destination.dir}"/>
+
+		<available file="${dirs.source}\administrator\components\com_${component.name}"
+		           type="dir" property="admin.exist" value="yes"/>
+		<available file="${dirs.source}\administrator\language"
+		           type="dir" property="adminLang.exist" value="yes"/>
+		<available file="${dirs.source}\components\com_${component.name}"
+		           type="dir" property="frontend.exist" value="yes"/>
+		<available file="${dirs.source}\language"
+		           type="dir" property="frontendLang.exist" value="yes"/>
+
+	</target>
+
+	<fileset dir="${dirs.source}" id="component-core">
+		<include name="administrator/components/com_ctransifex/**"/>
+		<include name="administrator/language/*/*.com_ctransifex.**"/>
+
+		<include name="components/com_ctransifex/**"/>
+		<include name="language/*/*.com_ctransifex.**"/>
+
+		<include name="media/com_ctransifex/**"/>
+		<exclude name="media/com_ctransifex/packages/**"/>
+	</fileset>
+
+	<fileset dir="${dirs.source}/administrator/components/com_${component.name}"
+	         id="component-install">
+		<include name="${component.name}.xml"/>
+		<include name="script.php"/>
+	</fileset>
+
+	<fileset dir="${dirs.source}" id="component-pro">
+		<include name="administrator/components/com_ctransifex/**"/>
+		<include name="administrator/language/*/*.com_ctransifex.**"/>
+
+		<include name="components/com_ctransifex/**"/>
+		<include name="language/*/*.com_ctransifex.**"/>
+
+		<include name="media/com_ctransifex/**"/>
+		<exclude name="media/com_ctransifex/packages/**"/>
+	</fileset>
+
+	<filterchain id="standard-tokens-core">
+		<replacetokens begintoken="@@" endtoken="@@">
+			<token key="DATE" value="${build.date}"/>
+			<token key="VERSION" value="${build.version}"/>
+		</replacetokens>
+	</filterchain>
+
+	<target name="buildZip" depends="setup-properties, buildComponent">
+		<echo msg="buildZip"/>
+
+		<zip destfile="${destination.dir}/../com_${component.name}-${build.version}/com_${component.name}-${build.version}-core.zip"
+		     basedir="${destination.dir}/../com_${component.name}-${build.version}/core"/>
+
+		<zip destfile="${destination.dir}/../com_${component.name}-${build.version}/com_${component.name}-${build.version}-pro.zip"
+		     basedir="${destination.dir}/../com_${component.name}-${build.version}/pro"/>
+	</target>
+
+	<target name="build-component-core">
+		<!-- Core version -->
+		<copy todir="${destination.dir}/core">
+			<fileset refid="component-core"/>
+			<fileset refid="component-install"/>
+		</copy>
+
+		<!-- create the packages folder -->
+		<mkdir dir="${destination.dir}/core/media/com_${component.name}/packages"/>
+		<touch file="${destination.dir}/core/media/com_${component.name}/packages/index.html" />
+
+		<!-- Copy the CHANGELOG -->
+		<copy file="${dirs.root}/CHANGELOG" tofile="${destination.dir}/core/administrator/components/com_${component.name}/CHANGELOG.php" overwrite="true">
+		</copy>
+
+		<copy file="./templates/version.php"
+		      tofile="${destination.dir}/core/administrator/components/com_${component.name}/version.php" overwrite="true">
+			<filterchain refid="standard-tokens-core"/>
+			<filterchain>
+				<replacetokens begintoken="@@" endtoken="@@">
+					<token key="PRO" value="0"/>
+				</replacetokens>
+			</filterchain>
+		</copy>
+
+		<copy file="${dirs.source}/administrator/components/com_${component.name}/${component.name}.xml"
+		      tofile="${destination.dir}/core/${component.name}.xml" overwrite="true">
+			<filterchain refid="standard-tokens-core"/>
+		</copy>
+		<!-- build the extension xml file -->
+		<extfile file="${destination.dir}/core/${component.name}.xml"
+		         sourceDir="${destination.dir}/core"
+		         component="com_${component.name}"
+				/>
+
+	</target>
+
+	<target name="build-component-pro">
+		<copy todir="${destination.dir}/pro">
+			<fileset refid="component-pro"/>
+			<fileset refid="component-install"/>
+		</copy>
+
+		<!-- create the packages folder -->
+		<mkdir dir="${destination.dir}/pro/media/com_${component.name}/packages"/>
+		<touch file="${destination.dir}/pro/media/com_${component.name}/packages/index.html" />
+
+		<!-- Copy the CHANGELOG -->
+		<copy file="${dirs.root}/CHANGELOG" tofile="${destination.dir}/pro/administrator/components/com_${component.name}/CHANGELOG.php" overwrite="true">
+		</copy>
+
+		<copy file="./templates/version.php"
+		      tofile="${destination.dir}/pro/administrator/components/com_${component.name}/version.php" overwrite="true">
+			<filterchain refid="standard-tokens-core"/>
+			<filterchain>
+				<replacetokens begintoken="@@" endtoken="@@">
+					<token key="PRO" value="1"/>
+				</replacetokens>
+			</filterchain>
+		</copy>
+
+		<copy file="${dirs.source}/administrator/components/com_${component.name}/${component.name}.xml"
+		      tofile="${destination.dir}/pro/${component.name}.xml" overwrite="true">
+			<filterchain refid="standard-tokens-core"/>
+		</copy>
+
+		<!-- build the extension xml file -->
+		<extfile file="${destination.dir}/pro/${component.name}.xml"
+		         sourceDir="${destination.dir}/pro"
+		         component="com_${component.name}"
+				/>
+
+	</target>
+
+	<target name="buildComponent"
+	        depends="setup-properties, build-component-core, build-component-pro" />
+
+	<!-- just creates a dev release -->
+	<target name="dev">
+		<gitversion workingCopy="${dirs.root}" propertyName="git.lastrevision"/>
+		<property name="build.version" value="git_${git.lastrevision}" override="true"/>
+
+		<phingcall target="buildZip" />
+	</target>
+
+	<!-- creates and uploads a dev release-->
+	<target name="dev-ftp" description="Makes everything except the documentation"
+	        >
+		<phingcall target="dev" />
+		<phingcall target="ftpdeploy" />
+	</target>
+
+	<target name="ftpdeploy" depends="setup-properties">
+		<gitversion workingCopy="${dirs.root}" propertyName="git.lastrevision"/>
+		<!-- Core release -->
+		<echo>Uploading CTransifex nightly build</echo>
+		<echo>Uploading Core release</echo>
+		<echo message="aaaaaaaaaaaaaaaaa ${destination.dir}" />
+		<ftpdeploy
+				host="${ftp.host}"
+				port="${ftp.port}"
+				username="${ftp.username}"
+				password="${ftp.password}"
+				dir="${ftp.dir}/ctransifex/core/git${git.lastrevision}"
+				mode="${ftp.mode}"
+				level="debug">
+			<fileset dir="${dirs.root}">
+				<include name="CHANGELOG"/>
+			</fileset>
+			<fileset dir="${destination.dir}/">
+				<include name="com_${component.name}-git_${git.lastrevision}-core.zip"/>
+			</fileset>
+		</ftpdeploy>
+		<!-- Professional release -->
+		<echo>Uploading Professional release</echo>
+		<ftpdeploy
+				host="${ftp.host}"
+				port="${ftp.port}"
+				username="${ftp.username}"
+				password="${ftp.password}"
+				dir="${ftp.dir}/ctransifex/pro/git${git.lastrevision}"
+				mode="${ftp.mode}"
+				level="debug">
+			<fileset dir="${dirs.root}">
+				<include name="CHANGELOG"/>
+			</fileset>
+			<fileset dir="${destination.dir}/">
+				<include name="com_${component.name}-git_${git.lastrevision}-pro.zip"/>
+			</fileset>
+		</ftpdeploy>
+	</target>
+</project>

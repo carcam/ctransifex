@@ -9,6 +9,8 @@
 
 defined('_JEXEC') or die('Restricted access');
 
+require_once JPATH_COMPONENT_ADMINISTRATOR . '/version.php';
+
 // thank you for this black magic Nickolas :)
 // Magic: merge the default translation with the current translation
 $jlang = JFactory::getLanguage();
@@ -24,7 +26,7 @@ JLoader::discover('ctransifexHelper', JPATH_COMPONENT . '/helpers');
 $input = JFactory::getApplication()->input;
 if($input->getCmd('view','') == 'liveupdate') {
     require_once JPATH_COMPONENT_ADMINISTRATOR.'/liveupdate/liveupdate.php';
-    JToolBarHelper::preferences( 'com_hotspots' );
+    JToolbarHelper::preferences('com_ctransifex');
     LiveUpdate::handleRequest();
     return;
 }

@@ -23,10 +23,9 @@ JHtml::_('stylesheet', 'media/com_ctransifex/css/ctransifex-frontend.css');
     <?php foreach ($this->languages as $language) : ?>
 		<tr>
 			<td>
-				<a href="<?php echo JRoute::_('index.php?option=com_ctransifex&task=download.download&language=' . $language->id); ?>"
-				   target="_blank">
+				<a href="<?php echo JRoute::_('index.php?option=com_ctransifex&view=language&zip=' . $language->id.'&project='.$this->item->id); ?>">
 					<?php if (isset($language->iso_lang_name)) : ?>
-					<?php echo $language->iso_lang_name; ?>
+					<?php echo ucfirst($language->iso_lang_name); ?>
 					<?php if (isset($language->iso_country_name) && $language->iso_country_name != '') : ?>
 						(<?php echo $language->iso_country_name; ?>)
 					<?php endif; ?>
@@ -43,16 +42,8 @@ JHtml::_('stylesheet', 'media/com_ctransifex/css/ctransifex-frontend.css');
 			<td>
 				<?php echo $language->completed; ?>%
 			</td>
-			<td>
-				<div>
-					<?php echo $language->created; ?>
-					<?php if($this->item->params['display_contribute_link'] && $language->completed != 100) : ?>
-						<a href="http://transifex.com/projects/p/<?php echo $this->item->transifex_slug; ?>/language/<?php echo $language->lang_name; ?>" class="btn" target="_blank">
-							<?php echo JText::_('COM_CTRANSIFEX_CONTRIBUTE_NOW'); ?>
-						</a>
-					<?php endif; ?>
-				</div>
-			</td>
 		</tr>
     <?php endforeach; ?>
 </table>
+
+<?php CTransifexHelperUtils::footer(); ?>
