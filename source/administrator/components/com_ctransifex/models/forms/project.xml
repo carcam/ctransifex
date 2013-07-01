@@ -89,7 +89,7 @@
                     label="COM_CTRANSIFEX_CONTRIBUTE_LINK"
                     description="COM_CTRANSIFEX_CONTRIBUTE_LINK_DESC"
                     class="inputbox"
-                    ilter="intval" size="1" default="1"
+                    filter="intval" size="1" default="1"
                     >
                 <option value="1">
                     JYES</option>
@@ -97,6 +97,25 @@
                     JNO</option>
             </field>
 
+	        <field
+			        name="determine_location"
+			        type="list"
+			        label="COM_CTRANSIFEX_DETERMINE_LOCATION"
+			        description="COM_CTRANSIFEX_DETERMINE_LOCATION_DESC"
+			        class="inputbox"
+			         size="1" default="1"
+			        >
+		        <option value="0">
+			        Resource name</option>
+		        <option value="1">
+			        File filter</option>
+	        </field>
+
+	        <field name="contributor_info"
+	               label="COM_CTRANSIFEX_CONTRIBUTOR_INFO_LABEL"
+	               description="COM_CTRANSIFEX_CONTRIBUTOR_INFO_DESC"
+	               filter="raw"
+	               type="editor" buttons="false" />
         </fieldset>
     </fields>
 
